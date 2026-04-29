@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tickets de comida</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f0f0f; color: #f0f0f0; min-height: 100vh; padding: 1.5rem 1rem; }
+  .app { max-width: 480px; margin: 0 auto; }
+
+  /* Colors */
+  :root {
+    --bg: #0f0f0f; --bg2: #1a1a1a; --bg3: #242424;
+    --border: #2e2e2e; --text: #f0f0f0; --text2: #a0a0a0; --text3: #606060;
+    --purple: #7F77DD; --purple-light: #2a2660;
+    --green: #1D9E75; --green-bg: #0d2e22; --green-text: #4cd9a0;
+    --red: #E24B4A; --red-bg: #2e1212; --red-text: #f08080;
+    --orange: #BA7517; --orange-bg: #2e1f08; --orange-text: #e8a84a;
+    --blue: #378ADD; --blue-bg: #0d1e2e; --blue-text: #7ab8f5;
+    --r0: 8px; --r1: 12px; --r2: 16px;
+  }
+
+  input, button { font-family: inherit; }
+  input { background: var(--bg2); border: 0.5px solid var(--border); color: var(--text); border-radius: var(--r1); padding: 10px 14px; font-size: 14px; outline: none; }
+  input:focus { border-color: var(--purple); }
+  button { cursor: pointer; border: none; background: none; color: inherit; }
+
+  .logo { width: 40px; height: 40px; border-radius: var(--r1); background: var(--purple); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem; }
+  .header-title { font-weight: 500; font-size: 17px; }
+  .header-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  .back-btn { font-size: 13px; color: var(--text3); padding: 0; }
+
+  .label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+
+  .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--r2); padding: 12px 14px; }
+  .card-accent { border-left: 3px solid; }
+
+  .avatar { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 500; flex-shrink: 0; }
+
+  .pill-active { background: #7F77DD22; border: 2px solid var(--purple); color: var(--text); font-weight: 500; }
+  .pill-idle { background: transparent; border: 0.5px solid var(--border); color: var(--text2); }
+
+  .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 1.75rem; }
+  .tab-btn { flex: 1; padding: 10px 0; font-size: 13px; color: var(--text3); border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1rem; }
+  .stat-card { border-radius: var(--r1); padding: 12px 10px; text-align: center; }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.8; margin-bottom: 4px; }
+  .stat-val { font-size: 17px; font-weight: 500; }
+
+  .btn-primary { width: 100%; padding: 13px; font-size: 14px; font-weight: 500; border-radius: var(--r1); background: var(--purple); color: #EEEDFE; border: none; }
+  .btn-secondary { padding: 13px 18px; font-size: 14px; border-radius: var(--r1); background: var(--bg2); border: 0.5px solid var(--border); color: var(--text); }
+
+  .flash { background: var(--green-bg); border-radius: var(--r1); padding: 10px 14px; color: var(--green-text); font-size: 13px; font-weight: 500; margin-bottom: 1.25rem; }
+  .error { background: var(--red-bg); border-radius: var(--r1); padding: 12px 14px; color: var(--red-text); font-size: 13px; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 200; }
+  .modal { background: var(--bg2); border-radius: var(--r2); padding: 1.5rem; max-width: 300px; width: 88%; border: 0.5px solid var(--border); }
+  .modal-title { font-weight: 500; font-size: 15px; margin-bottom: 8px; }
+  .modal-msg { font-size: 13px; color: var(--text2); margin-bottom: 1.25rem; }
+  .modal-btns { display: flex; gap: 8px; }
+  .modal-btns button { flex: 1; padding: 10px; font-size: 13px; border-radius: var(--r0); }
+  .modal-confirm { background: var(--red-bg); color: var(--red-text); border: 0.5px solid var(--red); }
+  .modal-cancel { background: var(--bg3); border: 0.5px solid var(--border); color: var(--text); }
+
+  .row { display: flex; align-items: center; gap: 12px; }
+  .row + .row { margin-top: 6px; }
+
+  .empty { text-align: center; padding: 2rem 0; color: var(--text3); font-size: 14px; }
+  .empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+  #new-grupo-row { display: flex; gap: 8px; }
+  #new-grupo-row input { flex: 1; }
+  #new-grupo-row button { padding: 10px 16px; font-size: 14px; font-weight: 500; border-radius: var(--r1); background: var(--purple); color: #EEEDFE; flex-shrink: 0; }
+
+  .num-btns { display: flex; gap: 6px; }
+  .num-btn { flex: 1; padding: 10px 0; font-size: 15px; border-radius: var(--r1); }
+
+  .modo-btns { display: flex; gap: 6px; margin-bottom: 1.25rem; }
+  .modo-btn { flex: 1; padding: 8px 4px; font-size: 12px; border-radius: var(--r0); }
+
+  .total-input-wrap { display: flex; align-items: center; background: var(--bg2); border-radius: var(--r2); padding: 4px 16px 4px 20px; border: 0.5px solid var(--border); }
+  .total-input-wrap input { flex: 1; font-size: 28px; font-weight: 500; border: none; background: transparent; padding: 0; border-radius: 0; width: 100%; }
+  .total-euro { font-size: 18px; color: var(--text3); }
+
+  .confirm-row { display: flex; gap: 8px; }
+  .confirm-row button:first-child { flex: 1; }
+
+  .efectivo-banner { display: flex; align-items: center; gap: 12px; background: var(--red-bg); border-radius: var(--r1); padding: 10px 14px; margin-bottom: 1rem; border: 0.5px solid var(--red); }
+  .efectivo-name { font-size: 13px; font-weight: 500; color: var(--red-text); }
+  .efectivo-reason { font-size: 11px; color: var(--red-text); opacity: 0.8; margin-top: 2px; }
+
+  .saldo-badge { font-size: 12px; font-weight: 500; padding: 2px 10px; border-radius: 20px; white-space: nowrap; }
+  .saldo-pos { color: var(--red-text); background: var(--red-bg); }
+  .saldo-neg { color: var(--green-text); background: var(--green-bg); }
+  .saldo-ok { color: var(--text3); }
+
+  .edit-nombre { font-size: 14px; font-weight: 500; width: 100%; padding: 3px 8px; border-radius: var(--r0); }
+
+  .reset-btn { font-size: 12px; color: var(--red-text); border: 0.5px solid var(--red); border-radius: var(--r0); padding: 8px 14px; background: none; }
+
+  .palettes {
+    --p0-accent: #378ADD; --p0-bg: var(--blue-bg); --p0-text: var(--blue-text);
+    --p1-accent: #1D9E75; --p1-bg: var(--green-bg); --p1-text: var(--green-text);
+    --p2-accent: #BA7517; --p2-bg: var(--orange-bg); --p2-text: var(--orange-text);
+    --p3-accent: #E24B4A; --p3-bg: var(--red-bg); --p3-text: var(--red-text);
+  }
+</style>
+</head>
+<body class="palettes">
+<div class="app" id="app"></div>
+
+<script>
+const STORAGE_KEY = "tickets_comida_html";
+const MIN_DEFICIT = -4, MAX_SURPLUS = 3, MAX_T = 10;
+const PALETTE = [
+  { accent:"#378ADD", bg:"var(--blue-bg)",   text:"var(--blue-text)"   },
+  { accent:"#1D9E75", bg:"var(--green-bg)",  text:"var(--green-text)"  },
+  { accent:"#BA7517", bg:"var(--orange-bg)", text:"var(--orange-text)" },
+  { accent:"#E24B4A", bg:"var(--red-bg)",    text:"var(--red-text)"    },
+];
+
+// ── Storage ──
+function loadData(){try{const r=localStorage.getItem(STORAGE_KEY);return r?JSON.parse(r):null;}catch{return null;}}
+function saveData(s){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(s));}catch{}}
+
+// ── Estado global ──
+let state = {
+  grupos: [{id:Date.now(),nombre:"Grupo 1",n:3,nombres:["Persona 1","Persona 2","Persona 3"],saldos:[0,0,0],historial:[],modoTickets:"eficiente"}],
+  grupoIdx: 0,
+  screen: "grupos", // grupos | setup | app
+  tab: "calc",
+  total: "",
+  sol: null,
+  conf: false,
+  flash: false,
+  editIdx: null,
+  setupData: null,
+  nuevoNombre: "",
+  modal: null,
+};
+
+function setState(patch){ Object.assign(state, patch); render(); }
+function g(){ return state.grupos[state.grupoIdx] || state.grupos[0]; }
+function updateGrupo(patch){
+  state.grupos = state.grupos.map((gr,i)=>i===state.grupoIdx?{...gr,...patch}:gr);
+  saveData({grupos:state.grupos, grupoIdx:state.grupoIdx, screen:state.screen});
+  render();
+}
+
+// ── Algoritmo ──
+function calcular(total, saldos, n, modo){
+  const allow5=modo!=="88", allow8=modo!=="55";
+  const min5=modo==="85"?1:0, min8=modo==="85"?1:0;
+  const posMap={};
+  for(let t5=min5;t5<=(allow5?MAX_T:min5);t5++)
+    for(let t8=min8;t8<=(allow8?MAX_T:min8);t8++){
+      const v=t5*5+t8*8; if(!(v in posMap))posMap[v]=[t5,t8];
+    }
+  const pos=Object.keys(posMap).map(Number).sort((a,b)=>a-b);
+  let mejor=null, mejorScore=Infinity;
+  function recurse(idx,asig,gastos,pagado){
+    if(idx===n){
+      const diff=pagado-total;
+      if(diff<MIN_DEFICIT||diff>MAX_SURPLUS)return;
+      const ideal=pagado/n;
+      const desv=gastos.reduce((acc,g,i)=>{
+        const ex=g-ideal;
+        const pen=ex>0?(saldos[i]<0?Math.abs(ex)*3:Math.abs(ex)):(saldos[i]>0?Math.abs(ex)*3:Math.abs(ex));
+        return acc+pen;
+      },0);
+      const score=Math.abs(diff)*5+desv+asig.reduce((a,[t5,t8])=>a+t5+t8,0)*0.01;
+      if(score<mejorScore-0.001){mejorScore=score;mejor={asig:asig.map(x=>[...x]),pagado,diff,gastos:[...gastos]};}
+      return;
+    }
+    const minP=pagado+pos[0]*(n-idx), maxP=pagado+pos[pos.length-1]*(n-idx);
+    if(minP>total+MAX_SURPLUS||maxP<total+MIN_DEFICIT)return;
+    for(const v of pos)recurse(idx+1,[...asig,posMap[v]],[...gastos,v],pagado+v);
+  }
+  recurse(0,[],[],0);
+  return mejor;
+}
+
+// ── Helpers UI ──
+function pal(i){ return PALETTE[i%PALETTE.length]; }
+
+function avatar(nombre, idx, size=36){
+  const p=pal(idx);
+  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${size*0.35}px;background:${p.bg};color:${p.text};">${(nombre||"?")[0].toUpperCase()}</div>`;
+}
+
+function saldoBadge(val){
+  if(Math.abs(val)<0.005) return `<span class="saldo-ok">Al día</span>`;
+  if(val>0) return `<span class="saldo-badge saldo-pos">+${val.toFixed(2)}€</span>`;
+  return `<span class="saldo-badge saldo-neg">${val.toFixed(2)}€</span>`;
+}
+
+function pilClass(active){ return active?"pill-active":"pill-idle"; }
+
+function logoSVG(){
+  return `<div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EEEDFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M22 10H2"/></svg></div>`;
+}
+
+// ── Render ──
+function render(){
+  const app = document.getElementById("app");
+  let html = "";
+
+  if(state.modal){
+    html += `<div class="modal-overlay" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-title">¿Estás seguro?</div>
+        <div class="modal-msg">${state.modal.mensaje}</div>
+        <div class="modal-btns">
+          <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+          <button class="modal-confirm" onclick="confirmModal()">Confirmar</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if(state.screen==="grupos"){
+    html += `<div class="header">${logoSVG()}<div><div class="header-title">Tickets de comida</div><div class="header-sub">Selecciona un grupo</div></div></div>`;
+    html += `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:1.5rem;">`;
+    state.grupos.forEach((gr,i)=>{
+      html += `<div class="card row" style="gap:10px;">
+        <button onclick="openGrupo(${i})" style="flex:1;text-align:left;padding:0;">
+          <div style="font-weight:500;font-size:15px;margin-bottom:2px;">${gr.nombre}</div>
+          <div style="font-size:12px;color:var(--text3);">${gr.n} personas · ${gr.historial.length} comidas</div>
+        </button>
+        <button onclick="editGrupo(${i})" style="font-size:12px;color:var(--text2);border:0.5px solid var(--border);border-radius:var(--r0);padding:6px 10px;">Editar</button>
+        ${state.grupos.length>1?`<button onclick="deleteGrupo(${i})" style="font-size:12px;color:var(--red-text);border:0.5px solid var(--red);border-radius:var(--r0);padding:6px 10px;">Borrar</button>`:""}
+      </div>`;
+    });
+    html += `</div>`;
+    html += `<div id="new-grupo-row">
+      <input id="nuevo-nombre" placeholder="Nombre del nuevo grupo" value="${state.nuevoNombre}" oninput="state.nuevoNombre=this.value" onkeydown="if(event.key==='Enter')addGrupo()">
+      <button onclick="addGrupo()">+ Nuevo</button>
+    </div>`;
+  }
+
+  else if(state.screen==="setup" && state.setupData){
+    const sd = state.setupData;
+    html += `<div class="header">
+      <button class="back-btn" onclick="setState({screen:'grupos'})">← Grupos</button>
+      <div style="flex:1;font-weight:500;font-size:17px;">${sd.nombre||"Nuevo grupo"}</div>
+    </div>`;
+
+    html += `<div style="margin-bottom:1.25rem;"><div class="label">Nombre del grupo</div>
+      <input style="width:100%;font-size:15px;font-weight:500;" value="${sd.nombre}" oninput="state.setupData.nombre=this.value">
+    </div>`;
+
+    html += `<div style="margin-bottom:1.25rem;"><div class="label">Participantes</div>
+      <div class="num-btns">`;
+    [2,3,4,5,6].forEach(num=>{
+      html+=`<button class="num-btn ${pilClass(sd.n===num)}" onclick="setupChangeN(${num})">${num}</button>`;
+    });
+    html += `</div></div>`;
+
+    html += `<div style="margin-bottom:1.25rem;"><div class="label">Nombres</div><div style="display:flex;flex-direction:column;gap:6px;">`;
+    for(let i=0;i<sd.n;i++){
+      const p=pal(i);
+      html+=`<div class="row card" style="border-left:3px solid ${p.accent};padding:8px 12px;">
+        ${avatar(sd.nombres[i]||"?",i,30)}
+        <input style="flex:1;border:none;background:transparent;font-size:14px;padding:0;" value="${sd.nombres[i]||""}" placeholder="Persona ${i+1}" oninput="setupChangeName(${i},this.value)">
+      </div>`;
+    }
+    html += `</div></div>`;
+
+    html += `<div style="margin-bottom:2rem;"><div class="label">Preferencia de tickets</div><div style="display:flex;flex-direction:column;gap:6px;">`;
+    [
+      {key:"eficiente",label:"Más eficiente",desc:"Mezcla libremente 5€ y 8€"},
+      {key:"88",label:"Solo 8€",desc:"Únicamente tickets de 8€"},
+      {key:"85",label:"8€ y 5€",desc:"Al menos un ticket de cada tipo"},
+      {key:"55",label:"Solo 5€",desc:"Únicamente tickets de 5€"},
+    ].forEach(op=>{
+      const active=sd.modoTickets===op.key;
+      html+=`<button onclick="state.setupData.modoTickets='${op.key}';render();" class="row ${pilClass(active)}" style="padding:10px 14px;border-radius:var(--r1);text-align:left;">
+        <div style="width:16px;height:16px;border-radius:50%;flex-shrink:0;background:var(--bg);border:${active?"5px solid var(--purple)":"1.5px solid var(--border)"};"></div>
+        <div><div style="font-size:14px;">${op.label}</div><div style="font-size:12px;color:var(--text3);margin-top:1px;">${op.desc}</div></div>
+      </button>`;
+    });
+    html+=`</div></div>`;
+    html+=`<button class="btn-primary" onclick="confirmarSetup()">Guardar y entrar</button>`;
+  }
+
+  else if(state.screen==="app"){
+    const gr = g();
+    const total = parseFloat(state.total)||0;
+    const sol = state.sol;
+    const efectivoIdx = sol&&sol.diff<-0.01?(()=>{let idx=0,best=-Infinity;for(let i=0;i<gr.n;i++){const s=gr.saldos[i]+(sol.pagado/gr.n-sol.gastos[i])*0.01;if(s>best){best=s;idx=i;}}return idx;})():null;
+
+    html+=`<div class="header">
+      <button class="back-btn" onclick="goGrupos()">← Grupos</button>
+      <div style="flex:1;"><div class="header-title">${gr.nombre}</div><div class="header-sub">${gr.n} personas · tickets 5€ y 8€</div></div>
+      <button onclick="editGrupo(${state.grupoIdx})" style="font-size:12px;color:var(--text2);border:0.5px solid var(--border);border-radius:var(--r0);padding:6px 12px;">Editar</button>
+    </div>`;
+
+    html+=`<div class="tabs">
+      ${["calc","saldos","historial"].map((k,_,a)=>{const l=["Calculadora","Saldos","Historial"][a.indexOf(k)];return`<button class="tab-btn${state.tab===k?" active":""}" onclick="setState({tab:'${k}'})">${l}</button>`;}).join("")}
+    </div>`;
+
+    if(state.tab==="calc"){
+      html+=`<div style="margin-bottom:1.5rem;">
+        <div class="label">Tickets</div>
+        <div class="modo-btns">
+          ${[{key:"eficiente",label:"Eficiente"},{key:"88",label:"Solo 8€"},{key:"85",label:"8€+5€"},{key:"55",label:"Solo 5€"}].map(op=>
+            `<button class="modo-btn ${pilClass(gr.modoTickets===op.key)}" onclick="setModo('${op.key}')">${op.label}</button>`
+          ).join("")}
+        </div>
+        <div class="label">Total de la cuenta</div>
+        <div class="total-input-wrap">
+          <input type="number" min="0" step="0.01" placeholder="0.00" value="${state.total}" oninput="onTotalChange(this.value)">
+          <span class="total-euro">€</span>
+        </div>
+      </div>`;
+
+      if(sol&&total>0){
+        const diffLabel=sol.diff===0?"Exacto":sol.diff>0?"Se regalan":"Faltan";
+        const diffVal=sol.diff===0?"✓":`${Math.abs(sol.diff).toFixed(2)}€`;
+        const diffBg=sol.diff===0?"var(--green-bg)":sol.diff>0?"var(--orange-bg)":"var(--red-bg)";
+        const diffC=sol.diff===0?"var(--green-text)":sol.diff>0?"var(--orange-text)":"var(--red-text)";
+        html+=`<div class="grid3">
+          <div class="stat-card" style="background:var(--bg2);"><div class="stat-label" style="color:var(--text3);">Cuenta</div><div class="stat-val" style="color:var(--text2);">${total.toFixed(2)}€</div></div>
+          <div class="stat-card" style="background:var(--bg2);"><div class="stat-label" style="color:var(--text3);">Con tickets</div><div class="stat-val" style="color:var(--text2);">${sol.pagado.toFixed(2)}€</div></div>
+          <div class="stat-card" style="background:${diffBg};"><div class="stat-label" style="color:${diffC};">${diffLabel}</div><div class="stat-val" style="color:${diffC};">${diffVal}</div></div>
+        </div>`;
+
+        if(efectivoIdx!==null){
+          html+=`<div class="efectivo-banner">
+            ${avatar(gr.nombres[efectivoIdx],efectivoIdx,32)}
+            <div><div class="efectivo-name">${gr.nombres[efectivoIdx]} paga ${Math.abs(sol.diff).toFixed(2)}€ en efectivo</div>
+            <div class="efectivo-reason">${gr.saldos[efectivoIdx]>0.01?`Debe ${gr.saldos[efectivoIdx].toFixed(2)}€ al grupo acumulados`:"Es quien menos ha puesto en tickets esta vez"}</div></div>
+          </div>`;
+        }
+
+        html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:1.25rem;">`;
+        for(let i=0;i<gr.n;i++){
+          const p=pal(i);
+          const [t5,t8]=sol.asig[i];
+          const gasto=sol.gastos[i],ideal=sol.pagado/gr.n,ex=Math.round((gasto-ideal)*100)/100;
+          const tickets=[t8>0?`${t8}×8€`:"",t5>0?`${t5}×5€`:""].filter(Boolean).join(" + ")||"—";
+          const esEf=efectivoIdx===i;
+          const accentColor=esEf?"var(--red-text)":p.accent;
+          html+=`<div class="card row" style="border-left:3px solid ${accentColor};">
+            ${avatar(gr.nombres[i],i,36)}
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:500;font-size:14px;margin-bottom:2px;">${gr.nombres[i]}</div>
+              <div style="font-size:12px;color:var(--text3);font-family:monospace;">${tickets}${esEf&&sol.diff<-0.01?` + ${Math.abs(sol.diff).toFixed(2)}€ ef.`:""}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-size:18px;font-weight:500;">${(esEf&&sol.diff<-0.01?gasto+Math.abs(sol.diff):gasto).toFixed(2)}€</div>
+              ${Math.abs(ex)>0.01?`<div style="font-size:11px;color:${ex>0?"var(--red-text)":"var(--green-text)"};">${ex>0?`+${ex.toFixed(2)}€ de más`:`${Math.abs(ex).toFixed(2)}€ de menos`}</div>`:""}
+            </div>
+          </div>`;
+        }
+        html+=`</div>`;
+
+        if(!state.conf){
+          html+=`<button class="btn-primary" onclick="setState({conf:true})">Confirmar y guardar saldos</button>`;
+        } else {
+          html+=`<div class="confirm-row">
+            <button class="btn-primary" onclick="confirmarPago()">Confirmar</button>
+            <button class="btn-secondary" onclick="setState({conf:false})">Cancelar</button>
+          </div>`;
+        }
+      } else if(total>0){
+        html+=`<div class="error">Sin combinación válida para ese importe.</div>`;
+      }
+    }
+
+    else if(state.tab==="saldos"){
+      if(state.flash) html+=`<div class="flash">✓ Comida guardada y saldos actualizados</div>`;
+      html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:1.5rem;">`;
+      for(let i=0;i<gr.n;i++){
+        const p=pal(i);
+        html+=`<div class="card row" style="border-left:3px solid ${p.accent};">
+          ${avatar(gr.nombres[i],i,36)}
+          <div style="flex:1;">
+            ${state.editIdx===i
+              ? `<input class="edit-nombre" value="${gr.nombres[i]}" autofocus onblur="saveNombre(${i},this.value)" onkeydown="if(event.key==='Enter')saveNombre(${i},this.value);if(event.key==='Escape')setState({editIdx:null});">`
+              : `<div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-weight:500;font-size:14px;">${gr.nombres[i]}</span>
+                  <button style="font-size:11px;color:var(--text3);" onclick="setState({editIdx:${i}})">editar</button>
+                </div>`
+            }
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${gr.saldos[i]<-0.005?"el grupo le debe":gr.saldos[i]>0.005?"debe al grupo":"al día"}</div>
+          </div>
+          ${saldoBadge(gr.saldos[i])}
+        </div>`;
+      }
+      html+=`</div>`;
+      html+=`<button class="reset-btn" onclick="resetSaldos()">Resetear saldos e historial</button>`;
+    }
+
+    else if(state.tab==="historial"){
+      if(gr.historial.length===0){
+        html+=`<div class="empty"><div class="empty-icon">—</div>Todavía no hay comidas registradas</div>`;
+      } else {
+        gr.historial.forEach(h=>{
+          html+=`<div class="card" style="margin-bottom:8px;">
+            <div class="row" style="margin-bottom:10px;">
+              <span style="font-weight:500;font-size:14px;flex:1;">${h.fecha}</span>
+              <span style="font-size:13px;color:var(--text3);">${h.total.toFixed(2)}€</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;">`;
+          h.gastos.forEach((gs,i)=>{
+            const p=pal(i);
+            html+=`<div class="row" style="background:var(--bg3);border-radius:var(--r0);padding:7px 10px;border-left:3px solid ${p.accent};">
+              ${avatar(h.nombres?.[i]||`P${i+1}`,i,22)}
+              <span style="font-size:13px;color:var(--text2);flex:1;">${h.nombres?.[i]||`P${i+1}`}</span>
+              <span style="font-size:14px;font-weight:500;">${gs.toFixed(2)}€</span>
+            </div>`;
+          });
+          html+=`</div></div>`;
+        });
+      }
+    }
+  }
+
+  app.innerHTML = html;
+}
+
+// ── Acciones ──
+function openGrupo(i){ state.grupoIdx=i; state.total=""; state.sol=null; state.tab="calc"; state.screen="app"; saveData({grupos:state.grupos,grupoIdx:i,screen:"app"}); render(); }
+function editGrupo(i){ state.grupoIdx=i; state.setupData={...state.grupos[i],nombres:[...state.grupos[i].nombres],saldos:[...state.grupos[i].saldos]}; state.screen="setup"; render(); }
+function goGrupos(){ state.screen="grupos"; saveData({grupos:state.grupos,grupoIdx:state.grupoIdx,screen:"grupos"}); render(); }
+
+function addGrupo(){
+  const nombre=state.nuevoNombre.trim()||`Grupo ${state.grupos.length+1}`;
+  const nuevo={id:Date.now(),nombre,n:3,nombres:["Persona 1","Persona 2","Persona 3"],saldos:[0,0,0],historial:[],modoTickets:"eficiente"};
+  state.grupos=[...state.grupos,nuevo];
+  state.grupoIdx=state.grupos.length-1;
+  state.setupData={...nuevo,nombres:[...nuevo.nombres],saldos:[...nuevo.saldos]};
+  state.nuevoNombre=""; state.screen="setup";
+  saveData({grupos:state.grupos,grupoIdx:state.grupoIdx,screen:"setup"});
+  render();
+}
+
+function deleteGrupo(i){
+  state.modal={mensaje:`Se eliminará "${state.grupos[i].nombre}" con todos sus saldos e historial.`, action:"delete", idx:i};
+  render();
+}
+
+function resetSaldos(){
+  state.modal={mensaje:`Se borrarán todos los saldos e historial de "${g().nombre}". Esta acción no se puede deshacer.`, action:"reset"};
+  render();
+}
+
+function closeModal(){ state.modal=null; render(); }
+function confirmModal(){
+  const m=state.modal;
+  if(m.action==="delete"){
+    let next=state.grupos.filter((_,i)=>i!==m.idx);
+    if(next.length===0)next=[{id:Date.now(),nombre:"Grupo 1",n:3,nombres:["Persona 1","Persona 2","Persona 3"],saldos:[0,0,0],historial:[],modoTickets:"eficiente"}];
+    state.grupos=next; state.grupoIdx=0; state.screen="grupos";
+    saveData({grupos:state.grupos,grupoIdx:0,screen:"grupos"});
+  } else if(m.action==="reset"){
+    updateGrupo({saldos:Array(g().n).fill(0),historial:[]});
+  }
+  state.modal=null; render();
+}
+
+function setupChangeN(num){
+  const s=state.setupData;
+  const nms=[...s.nombres]; while(nms.length<num)nms.push(`Persona ${nms.length+1}`);
+  const sls=[...s.saldos]; while(sls.length<num)sls.push(0);
+  state.setupData={...s,n:num,nombres:nms.slice(0,num),saldos:sls.slice(0,num)};
+  render();
+}
+
+function setupChangeName(i,val){ state.setupData.nombres[i]=val; }
+
+function confirmarSetup(){
+  const sd=state.setupData;
+  const patched={...sd,nombres:sd.nombres.map((nm,i)=>nm.trim()||`Persona ${i+1}`)};
+  state.grupos=state.grupos.map((gr,i)=>i===state.grupoIdx?patched:gr);
+  saveData({grupos:state.grupos,grupoIdx:state.grupoIdx,screen:"app"});
+  state.total=""; state.sol=null; state.screen="app"; state.tab="calc";
+  render();
+}
+
+function setModo(modo){ updateGrupo({modoTickets:modo}); state.conf=false; state.sol=state.total?calcular(parseFloat(state.total),g().saldos,g().n,modo):null; render(); }
+
+function onTotalChange(val){
+  state.total=val; state.conf=false;
+  const t=parseFloat(val);
+  state.sol=(!t||t<=0)?null:calcular(t,g().saldos,g().n,g().modoTickets);
+  render();
+}
+
+function confirmarPago(){
+  const sol=state.sol; if(!sol)return;
+  const t=parseFloat(state.total), ideal=sol.pagado/g().n;
+  updateGrupo({
+    saldos:g().saldos.map((s,i)=>Math.round((s+(ideal-sol.gastos[i]))*100)/100),
+    historial:[{fecha:new Date().toLocaleDateString("es-ES"),total:t,pagado:sol.pagado,gastos:sol.gastos,nombres:[...g().nombres]},...g().historial]
+  });
+  state.total=""; state.sol=null; state.conf=false; state.flash=true; state.tab="saldos";
+  setTimeout(()=>{ state.flash=false; render(); },2500);
+  render();
+}
+
+function saveNombre(i,val){
+  if(val.trim()){ const nm=[...g().nombres]; nm[i]=val.trim(); updateGrupo({nombres:nm}); }
+  state.editIdx=null; render();
+}
+
+// ── Init ──
+const saved=loadData();
+if(saved){ if(saved.grupos)state.grupos=saved.grupos; if(saved.grupoIdx!==undefined)state.grupoIdx=saved.grupoIdx; if(saved.screen)state.screen=saved.screen; }
+render();
+</script>
+</body>
+</html>
