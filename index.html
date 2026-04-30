@@ -554,16 +554,29 @@ function confirmarPago(){
   const sol=S.sol;if(!sol)return;
   const g=gr();
   const t=parseMonto(S.total);
-  const ideal=sol.pagado/g.n;
-  const nuevosSaldos=g.saldos.map((s,i)=>{
-    // ideal - gastos[i]: positivo = pagó de menos (debe al grupo), negativo = pagó de más (el grupo le debe)
-    const delta=ideal-sol.gastos[i];
-    return Math.round((s+delta)*1000)/1000; // precisión de 3 decimales para no perder nada
+
+  // Calcular gasto real de cada persona (incluyendo efectivo del que le toca)
+  const efIdx=sol.diff<-0.001?(()=>{let idx=0,best=-Infinity;for(let i=0;i<g.n;i++){const sc=g.saldos[i]+(sol.pagado/g.n-sol.gastos[i])*.01;if(sc>best){best=sc;idx=i;}}return idx;})():null;
+
+  const gastosReales=sol.gastos.map((gasto,i)=>{
+    // Si esta persona paga el efectivo, su gasto real incluye también ese efectivo
+    if(i===efIdx&&sol.diff<-0.001) return gasto+Math.abs(sol.diff);
+    return gasto;
   });
+
+  // El total real pagado = lo que cubre los tickets + el efectivo
+  const totalReal=gastosReales.reduce((a,b)=>a+b,0);
+  const idealReal=totalReal/g.n;
+
+  const nuevosSaldos=g.saldos.map((s,i)=>{
+    const delta=idealReal-gastosReales[i];
+    return Math.round((s+delta)*1000)/1000;
+  });
+
   const nuevaEntrada={
     fecha:new Date().toLocaleDateString("es-ES"),
     total:t,pagado:sol.pagado,
-    gastos:[...sol.gastos],nombres:[...g.nombres]
+    gastos:gastosReales,nombres:[...g.nombres]
   };
   S.grupos=S.grupos.map((gr,i)=>{
     if(i!==S.gi)return gr;
